@@ -24,11 +24,13 @@
   <ItemGroup>
     <Content Include="app.css" />
     <Content Include="Images\farback.png" />
+    <Content Include="Images\redlaser.png" />
     <Content Include="Images\ship.png" />
     <Content Include="Images\shipsheet.png" />
     <Content Include="index.html" />
     <Content Include="Libraries\phaser.js" />
     <Content Include="Libraries\phaser.min.js" />
+    <Content Include="Sounds\laser.wav" />
     <Content Include="Sounds\left.wav" />
     <Content Include="Sounds\right.wav" />
     <Content Include="Sounds\thrust.wav" />
