@@ -1,28 +1,21 @@
-﻿class Greeter {
-    element: HTMLElement;
-    span: HTMLElement;
-    timerToken: number;
+﻿class SpaceGame {
 
-    constructor(element: HTMLElement) {
-        this.element = element;
-        this.element.innerHTML += "The time is: ";
-        this.span = document.createElement('span');
-        this.element.appendChild(this.span);
-        this.span.innerText = new Date().toUTCString();
+    game: Phaser.Game;
+
+    constructor() {
+        this.game = new Phaser.Game(1024, 768, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
     }
 
-    start() {
-        this.timerToken = setInterval(() => this.span.innerHTML = new Date().toUTCString(), 500);
+    preload() {
+        this.game.load.image('farback', 'Images/farback.gif');
     }
 
-    stop() {
-        clearTimeout(this.timerToken);
+    create() {
+        var farback = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'farback');
+        farback.anchor.setTo(0.5, 0.5);
     }
-
 }
 
 window.onload = () => {
-    var el = document.getElementById('content');
-    var greeter = new Greeter(el);
-    greeter.start();
+    var game = new SpaceGame();
 };

@@ -23,13 +23,20 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="app.css" />
+    <Content Include="Images\farback.gif" />
     <Content Include="index.html" />
+    <Content Include="Libraries\phaser.js" />
+    <Content Include="Libraries\phaser.min.js" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
+    <TypeScriptCompile Include="Definitions\p2.d.ts" />
+    <TypeScriptCompile Include="Definitions\phaser.d.ts" />
+    <TypeScriptCompile Include="Definitions\pixi.d.ts" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Libraries\phaser.map" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
@@ -37,6 +44,7 @@
       <DependentUpon>web.config</DependentUpon>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
   </PropertyGroup>
