@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="app.css" />
+    <Content Include="Images\asteroid1.png" />
     <Content Include="Images\farback.png" />
     <Content Include="Images\redlaser.png" />
     <Content Include="Images\ship.png" />
