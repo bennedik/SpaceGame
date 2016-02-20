@@ -24,6 +24,7 @@
   <ItemGroup>
     <Content Include="app.css" />
     <Content Include="Images\farback.gif" />
+    <Content Include="Images\ship.png" />
     <Content Include="index.html" />
     <Content Include="Libraries\phaser.js" />
     <Content Include="Libraries\phaser.min.js" />
