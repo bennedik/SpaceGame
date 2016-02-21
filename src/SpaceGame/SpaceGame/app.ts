@@ -11,9 +11,9 @@ const laserSpeed: number = 600;
 const laserGap: number = 250;
 const asteroidCount: number = 200;
 const asteroidMinAngularVelocity: number = 0;
-const asteroidMaxAngularVelocity: number = 200;
+const asteroidMaxAngularVelocity: number = 100;
 const asteroidMinVelocity: number = 0;
-const asteroidMaxVelocity: number = 150;
+const asteroidMaxVelocity: number = 75;
 
 class SpaceGame {    
     game: Phaser.Game;
@@ -30,11 +30,12 @@ class SpaceGame {
     sfx_left: Phaser.Sound;
     sfx_right: Phaser.Sound;
     sfx_laser: Phaser.Sound;
+    sfx_collide: Phaser.Sound;
 
     laserInterval: number;
 
     constructor() {
-        this.game = new Phaser.Game(windowWidth, windowHeight, Phaser.AUTO, 'content', { preload: this.preload, create: this.create, update: this.update, checkBoundaries: this.checkBoundaries, createAsteroid: this.createAsteroid, asteroidCollision: this.asteroidCollision });
+        this.game = new Phaser.Game(windowWidth, windowHeight, Phaser.AUTO, 'content', { preload: this.preload, create: this.create, update: this.update, checkBoundaries: this.checkBoundaries, createAsteroid: this.createAsteroid, asteroidCollision: this.asteroidCollision, shipCollision: this.shipCollision });
     }
 
     preload() {
@@ -46,6 +47,7 @@ class SpaceGame {
         this.game.load.audio('left', 'Sounds/left.wav');
         this.game.load.audio('right', 'Sounds/right.wav');
         this.game.load.audio('laser', 'Sounds/laser.wav');
+        this.game.load.audio('collide', 'Sounds/collide.wav');
     }
 
     create() {
@@ -58,6 +60,8 @@ class SpaceGame {
         this.sfx_right = this.game.add.audio('right');
         this.sfx_laser = this.game.add.audio('laser');
         this.sfx_laser.allowMultiple = true;
+        this.sfx_collide = this.game.add.audio('collide');
+        this.sfx_collide.allowMultiple = true;
 
         //init graphics
         var farback = this.game.add.tileSprite(0, 0, worldWidth, worldHeight, 'farback');                        
@@ -144,7 +148,14 @@ class SpaceGame {
     }
 
     asteroidCollision(target, asteroid) {
+        asteroid.body.velocity.x += target.body.velocity.x * 0.075;
+        asteroid.body.velocity.y += target.body.velocity.y * 0.075;
+        target.kill();
+    }
 
+    shipCollision(ship, asteroid): boolean {
+        this.sfx_collide.play();
+        return true;
     }
 
     thrust: boolean;
@@ -231,10 +242,10 @@ class SpaceGame {
         //this.asteroidGroup.forEachExists(this.checkBoundaries, this);
 
         //asteroid collisions
-        //this.game.physics.arcade.overlap(this.asteroidGroup, this.asteroidGroup, this.asteroidCollision, null, this); 
+        this.game.physics.arcade.overlap(this.laserGroup, this.asteroidGroup, this.asteroidCollision, null, this); 
         
         this.game.physics.arcade.collide(this.asteroidGroup, this.asteroidGroup);
-        this.game.physics.arcade.collide(this.asteroidGroup, this.ship);                
+        this.game.physics.arcade.collide(this.asteroidGroup, this.ship, this.shipCollision, null, this);                
     }
 }
 

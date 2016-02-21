@@ -31,6 +31,7 @@
     <Content Include="index.html" />
     <Content Include="Libraries\phaser.js" />
     <Content Include="Libraries\phaser.min.js" />
+    <Content Include="Sounds\collide.wav" />
     <Content Include="Sounds\laser.wav" />
     <Content Include="Sounds\left.wav" />
     <Content Include="Sounds\right.wav" />
