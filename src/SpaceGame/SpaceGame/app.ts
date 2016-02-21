@@ -18,8 +18,8 @@ const stationSize: number = 364;
 const worldWidth: number = 2000;
 const worldHeight: number = 2000;
 const worldIncrease: number = 250;
-const asteroidCount: number = 50;
-const asteroidIncrease: number = 20;
+const asteroidDensity: number = 133333;
+const asteroidDensityDecrease: number = 1000;
 
 class SpaceGame {    
     game: Phaser.Game;
@@ -144,7 +144,9 @@ class Level {
         this.asteroidGroup.enableBody = true;
         this.asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
 
-        var asteroids = asteroidCount + level * asteroidIncrease;
+        var area = this.game.world.width * this.game.world.height;
+        var density = asteroidDensity - level * asteroidDensityDecrease;
+        var asteroids = area / density;
         for (var i = 0; i < asteroids; i++) {
             var x = this.game.rnd.between(0, this.game.world.width);
             var y = this.game.rnd.between(0, this.game.world.height);
@@ -209,7 +211,7 @@ class Level {
     levelUp(ship, station) {
         this.game.sound.stopAll();
         this.sfx_levelup.play();
-        this.game.state.start('level', true, false, 2);
+        this.game.state.start('level', true, false, this.level + 1);
     }
 
     thrust: boolean;
