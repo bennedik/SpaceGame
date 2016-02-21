@@ -1,7 +1,6 @@
-﻿const windowWidth: number = 1024;
+﻿//constants
+const windowWidth: number = 1024;
 const windowHeight: number = 768;
-const worldWidth: number = 5000;
-const worldHeight: number = 5000;
 const shipDrag: number = 100;
 const shipAcceleration: number = 300;
 const shipMaxVelocity: number = 300;
@@ -9,12 +8,18 @@ const shipAngularVelocity: number = 200;
 const laserLifespan: number = 2000;
 const laserSpeed: number = 600;
 const laserGap: number = 250;
-const asteroidCount: number = 200;
 const asteroidMinAngularVelocity: number = 0;
 const asteroidMaxAngularVelocity: number = 100;
 const asteroidMinVelocity: number = 0;
 const asteroidMaxVelocity: number = 75;
 const stationSize: number = 364;
+
+//constants for level set up
+const worldWidth: number = 2000;
+const worldHeight: number = 2000;
+const worldIncrease: number = 250;
+const asteroidCount: number = 50;
+const asteroidIncrease: number = 20;
 
 class SpaceGame {    
     game: Phaser.Game;
@@ -81,7 +86,7 @@ class Level {
         this.shield = 10;
 
         //init world
-        this.game.world.setBounds(0, 0, worldWidth, worldHeight);
+        this.game.world.setBounds(0, 0, worldWidth + level * worldIncrease, worldHeight + level * worldIncrease);
 
         //init sound
         this.sfx_thrust = this.game.add.audio('thrust');
@@ -95,7 +100,7 @@ class Level {
         this.sfx_explode = this.game.add.audio('explode');
 
         //init graphics
-        var farback = this.game.add.tileSprite(0, 0, worldWidth, worldHeight, 'farback');
+        var farback = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'farback');
 
         this.ship = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'ship');
         this.ship.angle = -90;
@@ -111,7 +116,7 @@ class Level {
             [stationSize, this.game.world.height - stationSize],
             [this.game.world.width - stationSize, this.game.world.height - stationSize]];
 
-        var locationIndex = 0; // this.game.rnd.integerInRange(0, stationLocation.length - 1);
+        var locationIndex = this.game.rnd.integerInRange(0, stationLocation.length - 1);
         var x = stationLocation[locationIndex][0];
         var y = stationLocation[locationIndex][1];
 
@@ -139,7 +144,8 @@ class Level {
         this.asteroidGroup.enableBody = true;
         this.asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
 
-        for (var i = 0; i < asteroidCount; i++) {
+        var asteroids = asteroidCount + level * asteroidIncrease;
+        for (var i = 0; i < asteroids; i++) {
             var x = this.game.rnd.between(0, this.game.world.width);
             var y = this.game.rnd.between(0, this.game.world.height);
             this.createAsteroid(x, y);
