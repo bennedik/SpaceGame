@@ -18,23 +18,6 @@ const stationSize: number = 364;
 
 class SpaceGame {    
     game: Phaser.Game;
-    ship: Phaser.Sprite;
-    laserGroup: Phaser.Group;
-    asteroidGroup: Phaser.Group;
-    station: Phaser.Sprite;
-
-    key_left: Phaser.Key;
-    key_right: Phaser.Key;
-    key_thrust: Phaser.Key;
-    key_fire: Phaser.Key;
-
-    sfx_thrust: Phaser.Sound;
-    sfx_left: Phaser.Sound;
-    sfx_right: Phaser.Sound;
-    sfx_laser: Phaser.Sound;
-    sfx_collide: Phaser.Sound;
-
-    laserInterval: number;
 
     constructor() {
         this.game = new Phaser.Game(windowWidth, windowHeight, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
@@ -51,6 +34,8 @@ class SpaceGame {
         this.game.load.audio('right', 'Sounds/right.wav');
         this.game.load.audio('laser', 'Sounds/laser.wav');
         this.game.load.audio('collide', 'Sounds/collide.wav');
+        this.game.load.audio('levelup', 'Sounds/levelup.wav');
+        this.game.load.audio('explode', 'Sounds/explode.wav');
     }
 
     create() {
@@ -76,13 +61,25 @@ class Level {
     sfx_right: Phaser.Sound;
     sfx_laser: Phaser.Sound;
     sfx_collide: Phaser.Sound;
+    sfx_levelup: Phaser.Sound;
+    sfx_explode: Phaser.Sound;
 
     laserInterval: number;
+    level: number;
+    shield: number;
 
     constructor() {
     }
 
     create() {
+        //init camera
+        this.game.camera.follow(this.ship);
+    }
+
+    init(level: number) {
+        this.level = level;
+        this.shield = 10;
+
         //init world
         this.game.world.setBounds(0, 0, worldWidth, worldHeight);
 
@@ -94,6 +91,8 @@ class Level {
         this.sfx_laser.allowMultiple = true;
         this.sfx_collide = this.game.add.audio('collide');
         this.sfx_collide.allowMultiple = true;
+        this.sfx_levelup = this.game.add.audio('levelup');
+        this.sfx_explode = this.game.add.audio('explode');
 
         //init graphics
         var farback = this.game.add.tileSprite(0, 0, worldWidth, worldHeight, 'farback');
@@ -154,9 +153,6 @@ class Level {
         this.key_right = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
         this.key_thrust = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
         this.key_fire = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
-        //init camera
-        this.game.camera.follow(this.ship);
     }
 
     checkBoundaries(sprite: Phaser.Sprite) {
@@ -194,11 +190,19 @@ class Level {
     }
 
     shipCollision(ship, asteroid): boolean {
-        this.sfx_collide.play();
+        if (this.shield == 0) {
+            this.sfx_explode.play();
+        }
+        else {
+            this.sfx_collide.play();
+            this.shield = this.shield - 1;
+        }
         return true;
     }
 
     levelUp(ship, station) {
+        this.game.sound.stopAll();
+        this.sfx_levelup.play();
         this.game.state.start('level', true, false, 2);
     }
 
@@ -293,6 +297,11 @@ class Level {
         this.game.physics.arcade.collide(this.asteroidGroup, this.station);
 
         this.game.physics.arcade.overlap(this.ship, this.station, this.levelUp, null, this);
+    }
+
+    render() {
+        this.game.debug.text('Level: ' + this.level, 5, 730);
+        this.game.debug.text('Shields: ' + this.shield, 5, 750);
     }
 }
 
