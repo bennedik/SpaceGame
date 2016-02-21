@@ -24,7 +24,8 @@
   <ItemGroup>
     <Content Include="app.css" />
     <Content Include="Images\asteroid1.png" />
-    <Content Include="Images\enemy.png" />
+    <Content Include="Images\enemy2.png" />
+    <Content Include="Images\enemyfire.png" />
     <Content Include="Images\farback.png" />
     <Content Include="Images\redlaser.png" />
     <Content Include="Images\ship.png" />
@@ -35,6 +36,7 @@
     <Content Include="Libraries\phaser.min.js" />
     <Content Include="Sounds\collide.wav" />
     <Content Include="Sounds\enemycollide.wav" />
+    <Content Include="Sounds\enemyfire.wav" />
     <Content Include="Sounds\explode.wav" />
     <Content Include="Sounds\gameover.wav" />
     <Content Include="Sounds\laser.wav" />
