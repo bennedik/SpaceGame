@@ -37,7 +37,7 @@ class SpaceGame {
     laserInterval: number;
 
     constructor() {
-        this.game = new Phaser.Game(windowWidth, windowHeight, Phaser.AUTO, 'content', { preload: this.preload, create: this.create, update: this.update, checkBoundaries: this.checkBoundaries, createAsteroid: this.createAsteroid, asteroidCollision: this.asteroidCollision, shipCollision: this.shipCollision, levelUp: this.levelUp });
+        this.game = new Phaser.Game(windowWidth, windowHeight, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
     }
 
     preload() {
@@ -54,6 +54,35 @@ class SpaceGame {
     }
 
     create() {
+        this.game.state.add('level', new Level());
+        this.game.state.start('level', false, false, 1);
+    }
+}
+
+class Level {
+    game: Phaser.Game;
+    ship: Phaser.Sprite;
+    laserGroup: Phaser.Group;
+    asteroidGroup: Phaser.Group;
+    station: Phaser.Sprite;
+
+    key_left: Phaser.Key;
+    key_right: Phaser.Key;
+    key_thrust: Phaser.Key;
+    key_fire: Phaser.Key;
+
+    sfx_thrust: Phaser.Sound;
+    sfx_left: Phaser.Sound;
+    sfx_right: Phaser.Sound;
+    sfx_laser: Phaser.Sound;
+    sfx_collide: Phaser.Sound;
+
+    laserInterval: number;
+
+    constructor() {
+    }
+
+    create() {
         //init world
         this.game.world.setBounds(0, 0, worldWidth, worldHeight);
 
@@ -67,7 +96,7 @@ class SpaceGame {
         this.sfx_collide.allowMultiple = true;
 
         //init graphics
-        var farback = this.game.add.tileSprite(0, 0, worldWidth, worldHeight, 'farback');                        
+        var farback = this.game.add.tileSprite(0, 0, worldWidth, worldHeight, 'farback');
 
         this.ship = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'ship');
         this.ship.angle = -90;
@@ -130,7 +159,7 @@ class SpaceGame {
         this.game.camera.follow(this.ship);
     }
 
-    checkBoundaries(sprite : Phaser.Sprite) {
+    checkBoundaries(sprite: Phaser.Sprite) {
         if (sprite.x < 0 && sprite.body.velocity.x < 0) {
             sprite.body.velocity.x = -sprite.body.velocity.x;
         } else if (sprite.x > this.game.world.width && sprite.body.velocity.x > 0) {
@@ -170,7 +199,7 @@ class SpaceGame {
     }
 
     levelUp(ship, station) {
-
+        this.game.state.start('level', true, false, 2);
     }
 
     thrust: boolean;
@@ -207,7 +236,7 @@ class SpaceGame {
                 this.right = false;
                 this.sfx_right.stop();
             }
-        }    
+        }
 
         if (!rightDown && !leftDown) {
             this.ship.body.angularVelocity = 0;
@@ -257,13 +286,13 @@ class SpaceGame {
         //this.asteroidGroup.forEachExists(this.checkBoundaries, this);
 
         //asteroid collisions
-        this.game.physics.arcade.overlap(this.laserGroup, this.asteroidGroup, this.asteroidCollision, null, this); 
-        
+        this.game.physics.arcade.overlap(this.laserGroup, this.asteroidGroup, this.asteroidCollision, null, this);
+
         this.game.physics.arcade.collide(this.asteroidGroup, this.asteroidGroup);
-        this.game.physics.arcade.collide(this.asteroidGroup, this.ship, this.shipCollision, null, this);  
+        this.game.physics.arcade.collide(this.asteroidGroup, this.ship, this.shipCollision, null, this);
         this.game.physics.arcade.collide(this.asteroidGroup, this.station);
-        
-        this.game.physics.arcade.overlap(this.ship, this.station, this.levelUp, null, this);              
+
+        this.game.physics.arcade.overlap(this.ship, this.station, this.levelUp, null, this);
     }
 }
 
