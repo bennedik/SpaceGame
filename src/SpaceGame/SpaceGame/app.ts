@@ -13,6 +13,7 @@ const asteroidMaxAngularVelocity: number = 100;
 const asteroidMinVelocity: number = 0;
 const asteroidMaxVelocity: number = 75;
 const stationSize: number = 364;
+const enemySpeed: number = 100;
 
 //constants for level set up
 const worldWidth: number = 2000;
@@ -20,6 +21,8 @@ const worldHeight: number = 2000;
 const worldIncrease: number = 250;
 const asteroidDensity: number = 133333;
 const asteroidDensityDecrease: number = 1000;
+const enemyCount: number = 1;
+const enemyIncrease: number = 1;
 
 class SpaceGame {    
     game: Phaser.Game;
@@ -29,11 +32,15 @@ class SpaceGame {
     }
 
     preload() {
+        //load images
         this.game.load.image('farback', 'Images/farback.png');
         this.game.load.image('redlaser', 'Images/redlaser.png');
         this.game.load.image('asteroid1', 'Images/asteroid1.png');
         this.game.load.image('station', 'Images/station.png');
         this.game.load.spritesheet('ship', 'Images/shipsheet3.png', 111, 63);
+        this.game.load.image('enemy', 'Images/enemy.png');
+
+        //load sounds
         this.game.load.audio('thrust', 'Sounds/thrust.wav');
         this.game.load.audio('left', 'Sounds/left.wav');
         this.game.load.audio('right', 'Sounds/right.wav');
@@ -42,6 +49,7 @@ class SpaceGame {
         this.game.load.audio('levelup', 'Sounds/levelup.wav');
         this.game.load.audio('explode', 'Sounds/explode.wav');
         this.game.load.audio('gameover', 'Sounds/gameover.wav');
+        this.game.load.audio('enemycollide', 'Sounds/enemycollide.wav');
     }
 
     create() {
@@ -56,6 +64,7 @@ class Level {
     laserGroup: Phaser.Group;
     asteroidGroup: Phaser.Group;
     station: Phaser.Sprite;
+    enemyGroup: Phaser.Group;
 
     key_left: Phaser.Key;
     key_right: Phaser.Key;
@@ -70,6 +79,7 @@ class Level {
     sfx_levelup: Phaser.Sound;
     sfx_explode: Phaser.Sound;
     sfx_gameOver: Phaser.Sound;
+    sfx_enemyCollide: Phaser.Sound;
 
     laserInterval: number;
     level: number;
@@ -99,10 +109,10 @@ class Level {
         this.sfx_laser = this.game.add.audio('laser');
         this.sfx_laser.allowMultiple = true;
         this.sfx_collide = this.game.add.audio('collide');
-        this.sfx_collide.allowMultiple = true;
         this.sfx_levelup = this.game.add.audio('levelup');
         this.sfx_explode = this.game.add.audio('explode');
         this.sfx_gameOver = this.game.add.audio('gameover');
+        this.sfx_enemyCollide = this.game.add.audio('enemycollide');
 
         //init graphics
         var farback = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'farback');
@@ -116,6 +126,7 @@ class Level {
 
         this.laserGroup = this.game.add.group();
         this.asteroidGroup = this.game.add.group();
+        this.enemyGroup = this.game.add.group();
 
         var stationLocation = [
             [stationSize, stationSize],
@@ -163,6 +174,16 @@ class Level {
         this.game.physics.enable(this.station, Phaser.Physics.ARCADE);
         this.station.body.immovable = true;
 
+        this.enemyGroup.enableBody = true;
+        this.enemyGroup.physicsBodyType = Phaser.Physics.ARCADE;
+
+        var enemies = enemyCount + level * enemyIncrease;
+        for (i = 0; i < enemies; i++) {
+            x = this.game.rnd.between(0, this.game.world.width);
+            y = this.game.rnd.between(0, this.game.world.height);
+            this.createEnemy(x, y);
+        }
+
         //init keyboard
         this.key_left = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.key_right = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
@@ -182,6 +203,15 @@ class Level {
         } else if (sprite.y > this.game.world.height && sprite.body.velocity.y > 0) {
             sprite.body.velocity.y = -sprite.body.velocity.y;
         }
+    }
+
+    createEnemy(x: number, y: number) {
+        var enemy = this.enemyGroup.create(x, y, 'enemy');
+        enemy.anchor.set(0.5, 0.5);
+        this.game.physics.enable(enemy, Phaser.Physics.ARCADE);
+        enemy.body.collideWorldBounds = true;
+        enemy.body.bounce.setTo(1, 1);
+        enemy.shield = 2;
     }
 
     createAsteroid(x: number, y: number) {
@@ -220,6 +250,29 @@ class Level {
             this.shield = this.shield - 1;
         }
         return true;
+    }
+
+    enemyCollision(ship, enemy): boolean {
+        this.sfx_enemyCollide.play();
+        return true;
+    }
+
+    enemyShot(laser, enemy) {
+        if (enemy.shield == 0) {
+            enemy.kill();
+        } else {
+            enemy.shield--;
+        }
+        laser.kill();
+    }
+
+    enemyAi(enemy) {
+        var distance = this.game.physics.arcade.distanceBetween(enemy, this.ship);
+        if (distance < 1000) {
+            var speed = (enemy.shield == 0) ? -enemySpeed : (distance > 300 ? enemySpeed : 0); //run away if shields are down or too close
+            this.game.physics.arcade.accelerateToObject(enemy, this.ship, speed, 100, 100);
+            enemy.angle = Phaser.Math.radToDeg(this.game.physics.arcade.angleBetween(enemy, this.ship)) - 90;
+        } 
     }
 
     gameOver() {
@@ -322,12 +375,23 @@ class Level {
         this.game.physics.arcade.overlap(this.laserGroup, this.asteroidGroup, this.asteroidCollision, null, this);
 
         this.game.physics.arcade.collide(this.asteroidGroup, this.asteroidGroup);
+        this.game.physics.arcade.collide(this.asteroidGroup, this.enemyGroup);
         this.game.physics.arcade.collide(this.asteroidGroup, this.station);
 
         //ship collisions
         if (this.alive) {
             this.game.physics.arcade.collide(this.asteroidGroup, this.ship, this.shipCollision, null, this);
+            this.game.physics.arcade.collide(this.enemyGroup, this.ship, this.enemyCollision, null, this);
             this.game.physics.arcade.overlap(this.ship, this.station, this.levelUp, null, this);
+        }
+
+        //enemy collisions
+        this.game.physics.arcade.collide(this.enemyGroup, this.station);
+        this.game.physics.arcade.overlap(this.laserGroup, this.enemyGroup, this.enemyShot, null, this);
+
+        //enemy ai
+        if (this.alive) {
+            this.enemyGroup.forEachAlive(this.enemyAi, this);
         }
     }
 
