@@ -33,7 +33,7 @@ class SpaceGame {
         this.game.load.image('redlaser', 'Images/redlaser.png');
         this.game.load.image('asteroid1', 'Images/asteroid1.png');
         this.game.load.image('station', 'Images/station.png');
-        this.game.load.spritesheet('ship', 'Images/shipsheet2.png', 111, 63);
+        this.game.load.spritesheet('ship', 'Images/shipsheet3.png', 111, 63);
         this.game.load.audio('thrust', 'Sounds/thrust.wav');
         this.game.load.audio('left', 'Sounds/left.wav');
         this.game.load.audio('right', 'Sounds/right.wav');
@@ -41,6 +41,7 @@ class SpaceGame {
         this.game.load.audio('collide', 'Sounds/collide.wav');
         this.game.load.audio('levelup', 'Sounds/levelup.wav');
         this.game.load.audio('explode', 'Sounds/explode.wav');
+        this.game.load.audio('gameover', 'Sounds/gameover.wav');
     }
 
     create() {
@@ -68,10 +69,12 @@ class Level {
     sfx_collide: Phaser.Sound;
     sfx_levelup: Phaser.Sound;
     sfx_explode: Phaser.Sound;
+    sfx_gameOver: Phaser.Sound;
 
     laserInterval: number;
     level: number;
     shield: number;
+    alive: boolean;
 
     constructor() {
     }
@@ -84,6 +87,7 @@ class Level {
     init(level: number) {
         this.level = level;
         this.shield = 10;
+        this.alive = true;
 
         //init world
         this.game.world.setBounds(0, 0, worldWidth + level * worldIncrease, worldHeight + level * worldIncrease);
@@ -98,6 +102,7 @@ class Level {
         this.sfx_collide.allowMultiple = true;
         this.sfx_levelup = this.game.add.audio('levelup');
         this.sfx_explode = this.game.add.audio('explode');
+        this.sfx_gameOver = this.game.add.audio('gameover');
 
         //init graphics
         var farback = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'farback');
@@ -105,7 +110,9 @@ class Level {
         this.ship = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'ship');
         this.ship.angle = -90;
         this.ship.anchor.set(0.5, 0.5);
-        var ignite = this.ship.animations.add('ignite');
+        var ignite = this.ship.animations.add('ignite', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        var explode = this.ship.animations.add('explode', [0, 10, 11, 12, 13, 14]);
+        explode.onComplete.add(this.gameOver, this);
 
         this.laserGroup = this.game.add.group();
         this.asteroidGroup = this.game.add.group();
@@ -199,13 +206,28 @@ class Level {
 
     shipCollision(ship, asteroid): boolean {
         if (this.shield == 0) {
-            this.sfx_explode.play();
+            if (this.alive) {
+                this.alive = false;
+                this.sfx_thrust.stop();
+                this.sfx_left.stop();
+                this.sfx_right.stop();
+                this.sfx_explode.play();
+                this.ship.animations.play('explode', 5, false, true);
+            }
         }
         else {
             this.sfx_collide.play();
             this.shield = this.shield - 1;
         }
         return true;
+    }
+
+    gameOver() {
+        var style = { font: "65px Arial", fill: "white", align: "center" };
+        var text = this.game.add.text(this.game.camera.position.x, this.game.camera.position.y, "GAME OVER", style);
+        text.anchor.set(0.5);
+
+        this.sfx_gameOver.play();
     }
 
     levelUp(ship, station) {
@@ -219,92 +241,94 @@ class Level {
     right: boolean;
 
     update() {
-        var leftDown = this.key_left.isDown;
-        var rightDown = this.key_right.isDown;
+        if (this.alive) {
+            var leftDown = this.key_left.isDown;
+            var rightDown = this.key_right.isDown;
 
-        if (leftDown) {
-            if (!this.left) {
-                this.left = true;
-                this.ship.body.angularVelocity = -shipAngularVelocity;
-                this.sfx_left.loopFull(0.2);
+            if (leftDown) {
+                if (!this.left) {
+                    this.left = true;
+                    this.ship.body.angularVelocity = -shipAngularVelocity;
+                    this.sfx_left.loopFull(0.2);
+                }
             }
-        }
-        else {
-            if (this.left) {
-                this.left = false;
-                this.sfx_left.stop();
+            else {
+                if (this.left) {
+                    this.left = false;
+                    this.sfx_left.stop();
+                }
             }
-        }
 
-        if (rightDown) {
-            if (!this.right) {
-                this.right = true;
-                this.ship.body.angularVelocity = shipAngularVelocity;
-                this.sfx_right.loopFull(0.2);
+            if (rightDown) {
+                if (!this.right) {
+                    this.right = true;
+                    this.ship.body.angularVelocity = shipAngularVelocity;
+                    this.sfx_right.loopFull(0.2);
+                }
             }
-        }
-        else {
-            if (this.right) {
-                this.right = false;
-                this.sfx_right.stop();
+            else {
+                if (this.right) {
+                    this.right = false;
+                    this.sfx_right.stop();
+                }
             }
-        }
 
-        if (!rightDown && !leftDown) {
-            this.ship.body.angularVelocity = 0;
-        }
-
-        if (this.key_thrust.isDown) {
-            this.game.physics.arcade.accelerationFromRotation(this.ship.rotation, shipAcceleration, this.ship.body.acceleration);
-
-            if (!this.thrust) {
-                this.thrust = true;
-                this.ship.animations.play('ignite', 30, false);
-                this.sfx_thrust.loopFull(0.6);
+            if (!rightDown && !leftDown) {
+                this.ship.body.angularVelocity = 0;
             }
-        } else {
-            this.ship.body.acceleration.set(0);
 
-            if (this.thrust) {
-                this.thrust = false;
-                this.ship.animations.stop(null, true);
-                this.sfx_thrust.stop();
+            if (this.key_thrust.isDown) {
+                this.game.physics.arcade.accelerationFromRotation(this.ship.rotation, shipAcceleration, this.ship.body.acceleration);
+
+                if (!this.thrust) {
+                    this.thrust = true;
+                    this.ship.animations.play('ignite', 30, false);
+                    this.sfx_thrust.loopFull(0.6);
+                }
+            } else {
+                this.ship.body.acceleration.set(0);
+
+                if (this.thrust) {
+                    this.thrust = false;
+                    this.ship.animations.stop(null, true);
+                    this.sfx_thrust.stop();
+                }
             }
-        }
 
-        if (this.key_fire.isDown) {
-            if (this.game.time.now > this.laserInterval) {
-                var laser = this.laserGroup.getFirstExists(false);
+            if (this.key_fire.isDown) {
+                if (this.game.time.now > this.laserInterval) {
+                    var laser = this.laserGroup.getFirstExists(false);
 
-                if (laser) {
-                    var length = this.ship.width * 0.5;
-                    var x = this.ship.x + (Math.cos(this.ship.rotation) * length);
-                    var y = this.ship.y + (Math.sin(this.ship.rotation) * length);
+                    if (laser) {
+                        var length = this.ship.width * 0.5;
+                        var x = this.ship.x + (Math.cos(this.ship.rotation) * length);
+                        var y = this.ship.y + (Math.sin(this.ship.rotation) * length);
 
-                    laser.reset(x, y);
-                    laser.lifespan = laserLifespan;
-                    laser.rotation = this.ship.rotation;
+                        laser.reset(x, y);
+                        laser.lifespan = laserLifespan;
+                        laser.rotation = this.ship.rotation;
 
-                    this.game.physics.arcade.velocityFromRotation(this.ship.rotation, laserSpeed, laser.body.velocity);
+                        this.game.physics.arcade.velocityFromRotation(this.ship.rotation, laserSpeed, laser.body.velocity);
 
-                    this.sfx_laser.play();
+                        this.sfx_laser.play();
 
-                    this.laserInterval = this.game.time.now + laserGap;
+                        this.laserInterval = this.game.time.now + laserGap;
+                    }
                 }
             }
         }
         
-        //bounce asteroids off world boundaries
-        //this.asteroidGroup.forEachExists(this.checkBoundaries, this);
-
         //asteroid collisions
         this.game.physics.arcade.overlap(this.laserGroup, this.asteroidGroup, this.asteroidCollision, null, this);
 
         this.game.physics.arcade.collide(this.asteroidGroup, this.asteroidGroup);
-        this.game.physics.arcade.collide(this.asteroidGroup, this.ship, this.shipCollision, null, this);
         this.game.physics.arcade.collide(this.asteroidGroup, this.station);
 
-        this.game.physics.arcade.overlap(this.ship, this.station, this.levelUp, null, this);
+        //ship collisions
+        if (this.alive) {
+            this.game.physics.arcade.collide(this.asteroidGroup, this.ship, this.shipCollision, null, this);
+            this.game.physics.arcade.overlap(this.ship, this.station, this.levelUp, null, this);
+        }
     }
 
     render() {
